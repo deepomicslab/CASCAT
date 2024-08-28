@@ -1,5 +1,8 @@
-<div style="display: flex; width: 100%;">
-   <img   align="left" src="doc/logo.png" alt="Model" style="width: 40%; height: auto; border-radius:40%;" /> <h1> Inferring Causal Trajectories from Spatial Transcriptomics Using CASCAT</h1>
+<div align="center">
+   <img  src="doc/logo.png" alt="Model" style="width: 40%; height: auto; " />
+</div>
+<div>
+<h1> Inferring Causal Trajectories from Spatial Transcriptomics Using CASCAT</h1>
 </div>
 
 **CASCAT** is a **tree-shaped structural causal model** with the local Markovian property between clusters and
