@@ -1,9 +1,7 @@
 <div style="display: flex; width: 100%;">
-  <div style="width: 25%; padding: 10px;">
-    <img src="doc/logo.png" alt="Model" style="width: 25%; height: auto; border-radius:40%;" />
-  </div>
+   <img src="doc/logo.png" alt="Model" style="width: 20%; height: auto; border-radius:40%;" />
   <div style="width: 90%; padding: 10px;">
-    <h1>inferring Causal trAjectories from SpAtial Transcriptomics data Using CASCAT</h1>
+    <h1>Inferring Causal Trajectories from Spatial Transcriptomics Using CASCAT</h1>
   </div>
 </div>
 
