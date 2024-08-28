@@ -1,5 +1,7 @@
 <div style="display: flex; width: 100%;">
-   <img src="doc/logo.png" alt="Model" style="width: 20%; height: auto; border-radius:40%;" />
+   <div style="align: left">
+      <img src="doc/logo.png" alt="Model" style="width: 40%; height: auto; border-radius:40%;" />
+   </div>
   <div style="width: 90%; padding: 10px;">
     <h1>Inferring Causal Trajectories from Spatial Transcriptomics Using CASCAT</h1>
   </div>
@@ -65,13 +67,15 @@ The observations `obs` are cells/spots and variables `var` are genes.
 
 ### Cluster
 
-(optinal) To access the clustering metrics, set `verbose=True` when training the graph structure learning and store true cluster labels
+(optinal) To access the clustering metrics, set `verbose=True` when training the graph structure learning and store true
+cluster labels
 in `adata.obs['cluster']`.
 
 1. update params in `./config/tree3.yml`
     1. `CMI_dir` as the directory for storing the casual cell graph outputs.(Note: we have provided the pre-caculated
        CMI values between cells in the data folder)
-   2. `percent` as the percentage of the causal cell graph to be removed, default is 0.05 in scRNA-seq dataset and 0.15 in ST dataset.
+    2. `percent` as the percentage of the causal cell graph to be removed, default is 0.05 in scRNA-seq dataset and 0.15
+       in ST dataset.
 2. To run CASCAT get **cluster** result, you can execute following code:
 
    `python main.py --yml_path ./config/tree3.yml --mode train --verbose True`
@@ -102,4 +106,5 @@ within it:
 
 ### Trajectory Inference Benchmarking
 
-To reproduce the reported results in the paper, we provide all the related configs under [Google drive](https://drive.google.com/drive/folders/1wtixZrL36yynIq90vTj1m55RPnQ6c-JA?usp=drive_link).
+To reproduce the reported results in the paper, we provide all the related configs
+under [Google drive](https://drive.google.com/drive/folders/1wtixZrL36yynIq90vTj1m55RPnQ6c-JA?usp=drive_link).
