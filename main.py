@@ -19,9 +19,9 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--yml_path', type=str, default='./config/tree3.yml')
     parser.add_argument('--mode', type=str, default='infer')
-    parser.add_argument('--verbose', type=bool, default=True)
+    parser.add_argument('--verbose', type=bool, default=False)
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--plot', type=str, default=None,
+    parser.add_argument('--plot', type=str, default='tree_mode',
                         help='tree_mode, emb, st_emb, pesodutime, st_pesodutime, ground_truth')
     args = parser.parse_args()
     args = update_args(args)

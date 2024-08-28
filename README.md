@@ -7,10 +7,11 @@
   </div>
 </div>
 
-**CASCAT** is a **tree-shaped structural causal model** with the local Markov property between clusters and conditional independences to infer a unique cell
+**CASCAT** is a **tree-shaped structural causal model** with the local Markovian property between clusters and
+conditional independences to infer a unique cell
 differentiation trajectory, overcoming Markov equivalence in high-dimensional, non-linear data.
 **CASCAT** **eliminates redundant links** between spatially close but independent cells,
-creating a causal cell graph that enhances the accuracy of existing spatial clustering algorithms. 
+creating a causal cell graph that enhances the accuracy of existing spatial clustering algorithms.
 
 
 <br/>
@@ -55,27 +56,45 @@ export rScript = '/home/yourname/miniconda3/envs/r_env/bin/Rscript'
 
 ## Dataset
 
-We provide a simulated dataset **linear1** under ./data/linear1 as an example dataset. All the ten simulated datasets used in the paper can be accessed from [Google drive](https://drive.google.com/drive/folders/1Ycm_e7EtX07cjuw0a5vbCs_dIswT-n7n?usp=sharing).
+We provide a simulated dataset **tree3** under ./data/tree3 as an example dataset. All the ten simulated datasets used
+in the paper can be accessed
+from [Google drive](https://drive.google.com/drive/folders/1Ycm_e7EtX07cjuw0a5vbCs_dIswT-n7n?usp=sharing).
 
 ## Run CASCAT
 
-CASCAT takes a standard AnnData (adata) object as input. 
-The observations `obs` are cells/spots and variables `var` are genes. 
+CASCAT takes a standard AnnData (adata) object as input.
+The observations `obs` are cells/spots and variables `var` are genes.
 
-If true cluster labels are stored in `adata.obs['cluster']`, set `verbose=True` when training the cluster GSL model.
+### Cluster
 
-To run CASCAT get **cluster** result, you can execute following code:
+(optinal) To access the clustering metrics, set `verbose=True` when training the graph structure learning and store true cluster labels
+in `adata.obs['cluster']`.
 
-`python main.py --yml_path ./config/linear1.yml --mode train --verbose True`
+1. update params in `./config/tree3.yml`
+    1. `CMI_dir` as the directory for storing the casual cell graph outputs.(Note: we have provided the pre-caculated
+       CMI values between cells in the data folder)
+   2. `percent` as the percentage of the causal cell graph to be removed, default is 0.05 in scRNA-seq dataset and 0.15 in ST dataset.
+2. To run CASCAT get **cluster** result, you can execute following code:
 
-If true trajectory labels are stored in `adata.obs['cluster']`, set `verbose=True` when inferring.
+   `python main.py --yml_path ./config/tree3.yml --mode train --verbose True`
 
-To run CASCAT get **trajectory** result, you can execute following code:
+### Trajectory Inference
 
-`python main.py --yml_path ./config/linear1.yml --mode infer --verbose True`
+(optinal) To access the TI metrics, store the true pseudo-time labels in `adata.uns['timecourse']` and the trajectory
+topology in `adata.uns['milestone_network']`.
 
+1. update params in `./config/tree3.yml`
+    1. `emb_path` is the path of clustering embedding.
+    2. `job_dir` is the directory of storing the clustering output.
 
-The output of CASCAT is a new adata object, with the following information stored
+2. To run CASCAT get **trajectory** result, you can execute following code:
+
+   `python main.py --yml_path ./config/tree3.yml --mode infer`
+3. To visualize the results, refer to the Visualization.ipynb notebook
+
+### Output
+
+The output of **CASCAT** is a new adata object, with the following information stored
 within it:
 
 - `adata.obs['cascat_clusters']` The predicted cluster labels.
@@ -83,27 +102,6 @@ within it:
 - `adata.uns['cascat_connectivities']` The inferred trajecory topology connectivities.
 - `adata.uns['CMI']` The inferred conditional mutual information matrix for each cluster.
 
+### Trajectory Inference Benchmarking
 
-
-### CASCAT Parameters
-
-All the parameters are stored in the yaml file. 
-You can modify the parameters in the **yaml** file in ./config to fit your data.
-
-#### Specify parameters in the yaml file
-
-- `n_clusters` The number of clusters.
-- `learned_graph` CMI or GL to learn the graph.
-- `hvg` Whether to use highly variable genes.
-- `percent` The percentage of CMI filter.
-- `output_dir` The directory to store the output.
-- `clu_dir` The directory to store cluster result.
-- `CMI_dir` The directory to store the CMI file.
-- `root` The root of the trajectory.
-
-#### Default parameters
-
-- `clu_model` The clustering model, including KMeans, Louvain, Leiden, and Spectral.
-- `threshold` The number of neighbors.
-- `k` The number of neighbors.
-- `temperature` The number of PCs.
+To reproduce the reported results in the paper, we provide all the related configs under [Google drive](https://drive.google.com/drive/folders/1wtixZrL36yynIq90vTj1m55RPnQ6c-JA?usp=drive_link).
