@@ -1,6 +1,6 @@
 <div style="display: flex; width: 100%;">
   <div style="width: 25%; padding: 10px;">
-    <img src="doc/logo.png" alt="Model" style="width: 100%; height: auto; border-radius:40%;" />
+    <img src="doc/logo.png" alt="Model" style="width: 25%; height: auto; border-radius:40%;" />
   </div>
   <div style="width: 90%; padding: 10px;">
     <h1>inferring Causal trAjectories from SpAtial Transcriptomics data Using CASCAT</h1>
