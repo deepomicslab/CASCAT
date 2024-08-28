@@ -1,5 +1,5 @@
 <div align="center">
-   <img  src="doc/logo.png" alt="Model" style="width: 40%; height: auto; " />
+   <img  src="doc/logo.png" alt="Model" style="width: 50%; height: auto; " />
 </div>
 <div>
 <h1> Inferring Causal Trajectories from Spatial Transcriptomics Using CASCAT</h1>
@@ -17,6 +17,7 @@ creating a causal cell graph that enhances the accuracy of existing spatial clus
     <img width="85%" src="doc/model.png" alt="Model">
 </p>
 <br/>
+
 
 ## Installation & Setup
 
@@ -54,11 +55,11 @@ export rScript = '/home/yourname/miniconda3/envs/r_env/bin/Rscript'
 
 ## Dataset
 
-We provide a simulated dataset **tree3** under ./data/tree3 as an example dataset. All the ten simulated datasets used
+We provide a simulated dataset **tree1** under ./data/tree1 as an example dataset. All the ten simulated datasets used
 in the paper can be accessed
 from [Google drive](https://drive.google.com/drive/folders/1Ycm_e7EtX07cjuw0a5vbCs_dIswT-n7n?usp=sharing).
 
-## Run CASCAT
+## 🔥 Run CASCAT
 
 CASCAT takes a standard AnnData (adata) object as input.
 The observations `obs` are cells/spots and variables `var` are genes.
@@ -69,28 +70,29 @@ The observations `obs` are cells/spots and variables `var` are genes.
 cluster labels
 in `adata.obs['cluster']`.
 
-1. update params in `./config/tree3.yml`
+1. update params in `./config/tree1.yml`
     1. `CMI_dir` as the directory for storing the casual cell graph outputs.(Note: we have provided the pre-caculated
        CMI values between cells in the data folder)
     2. `percent` as the percentage of the causal cell graph to be removed, default is 0.05 in scRNA-seq dataset and 0.15
        in ST dataset.
 2. To run CASCAT get **cluster** result, you can execute following code:
 
-   `python main.py --yml_path ./config/tree3.yml --mode train --verbose True`
+   `python main.py --yml_path ./config/tree1.yml --mode train --verbose True`
 
 ### Trajectory Inference
 
 (optinal) To access the TI metrics, store the true pseudo-time labels in `adata.uns['timecourse']` and the trajectory
 topology in `adata.uns['milestone_network']`.
 
-1. update params in `./config/tree3.yml`
+1. update params in `./config/tree1.yml`
     1. `emb_path` is the path of clustering embedding.
     2. `job_dir` is the directory of storing the clustering output.
+    3.  `output_dir` is the directory of storing the trajectory output.
 
 2. To run CASCAT get **trajectory** result, you can execute following code:
 
-   `python main.py --yml_path ./config/tree3.yml --mode infer`
-3. To visualize the results, refer to the Visualization.ipynb notebook
+   `python main.py --yml_path ./config/tree1.yml --mode infer`
+3. To visualize the results, refer to the [Visualization.ipynb](Visualization.ipynb) notebook
 
 ### Output
 
@@ -106,3 +108,9 @@ within it:
 
 To reproduce the reported results in the paper, we provide all the related configs
 under [Google drive](https://drive.google.com/drive/folders/1wtixZrL36yynIq90vTj1m55RPnQ6c-JA?usp=drive_link).
+
+
+## 🎉 InformationMeasures
+
+We've implemented the Python version of [InformationMeasures.jl](https://github.com/Tchanders/InformationMeasures.jl), enhanced with a kernel function accelerated by numba. 
+Consult the [InfoMeasure.ipynb](InfoMeasure.ipynb) for usage details.

@@ -12,8 +12,6 @@ import seaborn as sns
 import matplotlib.image as mpimg
 import umap
 
-rcParams['font.family'] = 'Times New Roman'
-
 
 def plot_ground_truth(adata, gt_key='milestone_network', save_path=None, direction='horizontal'):
     def nudge(pos, x_shift, y_shift):
@@ -51,7 +49,7 @@ def plot_ground_truth(adata, gt_key='milestone_network', save_path=None, directi
 
 
 def plot_gt_milestone_network(ad, uns_mn_key="milestone_network", start_milestones="sA", start_node_color="red",
-                              node_color="blue", figsize=(12, 12), node_size=800, font_size=9, save_path=None,
+                              node_color="blue", figsize=(6, 6), node_size=800, font_size=9, save_path=None,
                               **kwargs):
     if uns_mn_key not in ad.uns_keys():
         raise Exception(f"Milestone network not found in uns.{uns_mn_key}")
@@ -85,57 +83,6 @@ def plot_gt_milestone_network(ad, uns_mn_key="milestone_network", start_mileston
     plt.show()
 
 
-def plot_spatial(data, labels, save_path=None, show=True, s=10, ls=8, color='Paired', ax=None, **kwargs):
-    if ax is None:
-        ax, fig = plt.subplots(1, 1, figsize=(8, 6))
-    if 'spatial' in data.obsm.keys():
-        xy_coord = data.obsm['spatial']
-    else:
-        raise Exception("No spatial information found in data.obsm")
-    if 'cluster' not in data.obs.keys():
-        raise Exception("No cluster label found in data.obs")
-    sns.scatterplot(x=xy_coord[:, 0], y=xy_coord[:, 1], hue=labels, s=s, palette=color, **kwargs)
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.gca().invert_yaxis()
-    plt.gca().spines['top'].set_visible(False)
-    plt.gca().spines['right'].set_visible(False)
-    plt.gca().spines['left'].set_visible(False)
-    plt.gca().spines['bottom'].set_visible(False)
-    plt.xticks([])
-    plt.yticks([])
-    plt.legend(loc='center left', bbox_to_anchor=(0.95, 0.5), fontsize=ls, frameon=False)
-    if save_path is not None:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    if show:
-        plt.show()
-    return ax
-
-
-def plot_spatial_graph(adata, img_path=None, tissue_pos_path=None, save_path=None, scale_x=0, scale_y=4,
-                       ls=8, s=6, labels=None, colors='Paired'):
-    fig, ax = plt.subplots(figsize=(8, 5))
-    if 'spatial' in adata.obsm.keys():
-        x_coord = adata.obsm['spatial']
-    else:
-        raise Exception("No spatial information found in data.obsm")
-    img = mpimg.imread(img_path)
-    tissue_pos = pd.read_csv(tissue_pos_path, header=None)
-    ax.imshow(img, alpha=0.6)
-    size_factor_y = img.shape[1] / (max(tissue_pos.iloc[:, 5]) - min(tissue_pos.iloc[:, 5])) / 1.2
-    size_factor_x = img.shape[0] / (max(tissue_pos.iloc[:, 4]) - min(tissue_pos.iloc[:, 4])) / 1.2
-    y_ = x_coord[:, 1] * size_factor_y
-    x_ = x_coord[:, 0] * size_factor_x
-    y_ = y_ + x_coord[:, 1].min() * size_factor_y * scale_y
-    x_ = x_ + x_coord[:, 0].min() * size_factor_x * scale_x
-    sns.scatterplot(x=y_, y=x_, hue=labels,
-                    s=s, ax=ax, palette=colors, legend=True)
-    sns.despine()
-    ax.legend(loc='center left', bbox_to_anchor=(1, 0.9), fontsize=ls, frameon=False, ncol=1)
-    if save_path is not None:
-        plt.savefig(save_path, dpi=300)
-    plt.show()
-
-
 def plot_pydot_graph(G, labels, save_path=None, show=True, direction='LR'):
     nodes, edges = list(G.nodes), list(G.edges)
     if labels is not None:
@@ -154,12 +101,14 @@ def plot_pydot_graph(G, labels, save_path=None, show=True, direction='LR'):
     tmp_png = pydot_g.create_png(f="png")
     fp = io.BytesIO(tmp_png)
     img = mpimg.imread(fp, format='png')
-    plt.rcParams["figure.figsize"] = [20, 8]
+    plt.rcParams["figure.figsize"] = [10, 4]
     plt.rcParams["figure.autolayout"] = True
     plt.axis('off')
     plt.imshow(img)
     if save_path != None:
-        plt.savefig(save_path, dpi=300)
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+        plt.savefig(save_path + 'trajectory_tree.png', dpi=300)
     if show:
         plt.show()
 
@@ -200,7 +149,7 @@ def plot_pesudotime(emd, group_frac, connectivities, predict_labels, pesudotime,
                             font_size=8)
     plt.axis('off')
     if save_path is not None:
-        plt.savefig(save_path, dpi=300)
+        plt.savefig(save_path + 'pseudotime.png', dpi=300)
     if show:
         plt.show()
     else:
@@ -291,25 +240,5 @@ def plot_st_pesudotime(adata, pesudotime, save_path=None):
     ax1.axis('off')
     plt.tight_layout()
     if save_path is not None:
-        plt.savefig(save_path, dpi=300)
+        plt.savefig(save_path + 'st_pseudotime.png', dpi=300)
     plt.show()
-
-
-def plot_subtype(cluster, subtype, colors='Paired', show=True, img_path=None, title=None):
-    fig, ax = plt.subplots(1, 1, figsize=(7, 6))
-    df = pd.DataFrame({'subtype': subtype, 'cluster': cluster})
-    pivoted_df = df.pivot_table(index='cluster', columns='subtype', aggfunc='size', fill_value=0, observed=True)
-    pivoted_df.plot(kind='barh', stacked=True, ax=ax, color=colors, legend=False)
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=8, frameon=False)
-    ax.xaxis.set_tick_params(labelsize=12)
-    ax.yaxis.set_tick_params(labelsize=12)
-    ax.set_xlabel('Count', fontsize=15)
-    ax.set_ylabel('Layer', fontsize=15)
-    if title is not None:
-        ax.set_title(title, fontsize=15)
-    if img_path is not None:
-        plt.savefig(img_path, dpi=300)
-    if show:
-        plt.show()
-    else:
-        return fig, ax

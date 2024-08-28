@@ -3,7 +3,6 @@ import random
 from models.CMITree import BinaryCMITree
 from models.model_utils import *
 from utils.data_loader import *
-from utils.Plot import plot_ground_truth
 from utils.Metrics import caculate_metric
 
 
@@ -142,8 +141,7 @@ class InferExperiment:
                 print("No ground truth for evaluation")
                 return None, None, None
 
-    def plot(self, type: str = "st_emb", sorted_genes=None, marker_genes=None, order_layer=None, show=True,
-             colors='Paired', show_traj=False):
+    def plot(self, type: str = "st_emb", show=True, colors='Paired', show_traj=False):
         obj = CMIPlot(self.adata, save_path=self.img_path, start_cell_idx=self.adata.uns['start_id'],
                       root=self.adata.uns['root'], group_frac=self.adata.uns['group_frac'],
                       pesudo_key=self.pesudo_key, connect_key=self.cluster_key,
@@ -158,14 +156,6 @@ class InferExperiment:
             obj.plot_st_pseudotime()
         elif type == "tree_mode":
             obj.plot_trajectory_tree(show=show)
-        elif type == "subtype":
-            obj.plot_subtype(show=show)
-        elif type == "marker_heatmap":
-            obj.plot_marker_heatmap(sorted_genes, order_layer, show=show)
-        elif type == "marker_gene":
-            obj.plot_marker_gene(marker_genes, order_layer, show=show)
-        elif type == "ground_truth":
-            plot_ground_truth(self.adata)
         else:
             print(
                 "Select plot type from st_emb, st_pesodutime, subtype, marker_heatmap, marker_gene, tree_mode, emb, pesodutime, ground_truth")

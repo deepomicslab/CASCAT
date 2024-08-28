@@ -68,11 +68,11 @@ class CMIPlot:
         return group_pop, group_pt
 
     def plot_trajectory_tree(self, show=True):
-        plot_pydot_graph(self.graph, self.labels_map, self.img_path + 'trajectory_tree.png', show=show)
+        plot_pydot_graph(self.graph, self.labels_map, self.img_path, show=show)
 
     def plot_embedding(self, show=True, colors='Paired'):
         plot_embedding(self.emd, self.group_frac, self.connectivities, self.predict_labels, colors=colors,
-                       save_path=self.img_path + 'emb.png', label_map=self.labels_map, show=show)
+                       save_path=self.img_path, label_map=self.labels_map, show=show)
 
     def plot_st_embedding(self, show_trajectory=False, colors='tab10'):
         save_path = self.img_path + 'st_emb.png' if self.img_path is not None else None
@@ -81,58 +81,10 @@ class CMIPlot:
 
     def plot_pseudotime(self, show=True):
         plot_pesudotime(self.emd, self.group_frac, self.connectivities, self.predict_labels, self.pesudotime,
-                        self.labels_map, show, save_path=self.img_path + 'spseudotime.png')
+                        self.labels_map, show, save_path=self.img_path)
 
     def plot_st_pseudotime(self):
-        plot_st_pesudotime(self.adata, self.pesudotime, save_path=self.img_path + 'st_pseudotime.png')
-
-    def plot_subtype(self, show=True):
-        plot_subtype(self.predict_labels, self.labels, self.img_path, show)
-
-    def plot_marker_heatmap(self, sorted_genes, order_layer, show=True):
-        if 'gene_symbol' not in self.adata.var.keys():
-            df = pd.DataFrame(self.adata.X, index=self.adata.obs_names, columns=self.adata.var.index)
-        else:
-            df = pd.DataFrame(self.adata.X, columns=self.adata.var['gene_symbol'], index=self.adata.obs_names)
-        df = (df - df.mean()) / df.std()
-        df = df.loc[:, df.columns.isin(sorted_genes)]
-        df['cluster'] = self.predict_labels
-        df = df.groupby('cluster').mean()
-        df = df[sorted_genes]
-        df = df.loc[order_layer]
-        sns.set(style="white")
-        g = sns.clustermap(df, center=0, cmap="vlag",
-                           dendrogram_ratio=(.1, .2),
-                           cbar_pos=(.02, .32, .03, .2),
-                           row_cluster=False,
-                           linewidths=.75, figsize=(12, 5))
-        g.ax_row_dendrogram.remove()
-        plt.xlabel('Gene')
-        if self.img_path is not None:
-            plt.savefig(self.img_path + 'marker_heatmap.png', dpi=300)
-        plt.show()
-
-    def plot_marker_gene(self, markers, order_layer, show=True):
-        if 'gene_symbol' not in self.adata.var.keys():
-            df = pd.DataFrame(self.adata.X.T, columns=self.adata.obs_names, index=self.adata.var.index)
-        else:
-            df = pd.DataFrame(self.adata.X.T, index=self.adata.var['gene_symbol'], columns=self.adata.obs_names)
-        df = df.loc[markers].T
-        df['Layer'] = ["Layer_" + str(l) for l in self.predict_labels]
-        sns.set(style="white")
-        fig, axes = plt.subplots(nrows=1, ncols=len(markers), figsize=(12, 6), sharey=True)
-        genes = [i for i in df.columns.unique() if i != 'Layer']
-        for i, gene in enumerate(genes):
-            summary_stats = df[[gene, 'Layer']].reset_index().groupby('Layer')[gene].mean().reindex(order_layer)
-            axes[i].plot(summary_stats, order_layer, marker='o', color='black')
-            axes[i].set_title(gene, fontsize=25, fontweight='bold')
-        plt.tight_layout()
-        if self.img_path is not None:
-            plt.savefig(self.img_path + 'marker_gene.png', dpi=300)
-        if show:
-            plt.show()
-        else:
-            return fig, axes
+        plot_st_pesudotime(self.adata, self.pesudotime, save_path=self.img_path)
 
 
 def get_feat_mask(features, rate):

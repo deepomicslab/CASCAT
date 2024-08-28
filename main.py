@@ -17,8 +17,8 @@ def update_args(args):
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--yml_path', type=str, default='./config/tree3.yml')
-    parser.add_argument('--mode', type=str, default='train')
+    parser.add_argument('--yml_path', type=str, default='./config/tree1.yml')
+    parser.add_argument('--mode', type=str, default='infer', help='train or infer')
     parser.add_argument('--verbose', type=bool, default=True)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--plot', type=str, default='tree_mode',
@@ -39,9 +39,12 @@ def run_train(args):
 
 def run_infer(args):
     infer_exp = InferExperiment(args)
-    IM, KT, SR = infer_exp.infer()
+    IM, KT, SR = infer_exp.infer(debug=True, debug_nodes=['5'])
     if args.plot is not None:
         infer_exp.plot(args.plot, show=True, colors='tab10')
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+    infer_exp.adata.write(os.path.join(args.output_dir, 'data_processed.h5ad'))
     return IM, KT, SR
 
 
