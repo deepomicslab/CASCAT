@@ -1,9 +1,10 @@
-<div align="center">
-   <img  src="doc/logo.png" alt="Model" style="width: 50%; height: auto; " />
-</div>
-<div>
-<h1> Inferring Causal Trajectories from Spatial Transcriptomics Using CASCAT</h1>
-</div>
+<p align="center">
+<img src="doc/CASCATlogo.png" width="70%" height="70%">
+</p>
+<h1> <p align="center">
+   Inferring Causal Trajectories from Spatial Transcriptomics Using CASCAT
+</p> </h1>
+
 
 **CASCAT** is a **tree-shaped structural causal model** with the local Markovian property between clusters and
 conditional independences to infer a unique cell
@@ -14,10 +15,9 @@ creating a causal cell graph that enhances the accuracy of existing spatial clus
 
 <br/>
 <p align="center">
-    <img width="85%" src="doc/model.png" alt="Model">
+    <img width="85%" src="doc/Workflow.png" alt="Model">
 </p>
 <br/>
-
 
 ## Installation & Setup
 
@@ -87,7 +87,7 @@ topology in `adata.uns['milestone_network']`.
 1. update params in `./config/tree1.yml`
     1. `emb_path` is the path of clustering embedding.
     2. `job_dir` is the directory of storing the clustering output.
-    3.  `output_dir` is the directory of storing the trajectory output.
+    3. `output_dir` is the directory of storing the trajectory output.
 
 2. To run CASCAT get **trajectory** result, you can execute following code:
 
@@ -109,8 +109,8 @@ within it:
 To reproduce the reported results in the paper, we provide all the related configs
 under [Google drive](https://drive.google.com/drive/folders/1wtixZrL36yynIq90vTj1m55RPnQ6c-JA?usp=drive_link).
 
-
 ## 🎉 InformationMeasures
 
-We've implemented the Python version of [InformationMeasures.jl](https://github.com/Tchanders/InformationMeasures.jl), enhanced with a kernel function accelerated by numba. 
+We've implemented the Python version of [InformationMeasures.jl](https://github.com/Tchanders/InformationMeasures.jl),
+enhanced with a kernel function accelerated by numba.
 Consult the [InfoMeasure.ipynb](InfoMeasure.ipynb) for usage details.
