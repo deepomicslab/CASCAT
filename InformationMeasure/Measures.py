@@ -99,14 +99,14 @@ def get_conditional_entropy(probabilites=False, estimator='maximum_likelihood',
     return apply_conditional_entropy_formula(entropy_xy, entropy_y)
 
 
-def get_total_correlation(valuesX, valuesY, valueZ, probabilites=False, estimater='maximum_likelihood', base=2,
+def get_total_correlation(valuesX, valuesY, valuesZ, probabilites=False, estimater='maximum_likelihood', base=2,
                           discretize="uniform_width", number_of_bins=0, get_number_of_bins='sqrt', lamda=None,
                           prior=1):
     if probabilites != False:
         prob_xyz = probabilites
     else:
         freq_xyz = discretize_values(discretize, number_of_bins, get_number_of_bins, valuesX=valuesX, valuesY=valuesY,
-                                     valuesZ=valueZ)
+                                     valuesZ=valuesZ)
         prob_xyz = get_probabilities(estimater, freq_xyz, lamda, prior)
     prob_xy = prob_xyz.sum(axis=2)
     prob_x, prob_y = prob_xy.sum(axis=1), prob_xy.sum(axis=0)

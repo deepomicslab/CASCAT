@@ -5,6 +5,9 @@
    Inferring Causal Trajectories from Spatial Transcriptomics Using CASCAT
 </p> </h1>
 
+[![Supported Python versions](https://img.shields.io/pypi/pyversions/LibMOON.svg?logo=python&logoColor=FFE873)](https://github.com/deepomicslab/CASCAT)
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fdeepomicslab%2FCASCAT&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
+[![Made With Friends](https://img.shields.io/badge/Made%20With-Love-orange.svg)](https://github.com/deepomicslab/CASCAT)
 
 **CASCAT** is a **tree-shaped structural causal model** with the local Markovian property between clusters and
 conditional independences to infer a unique cell
