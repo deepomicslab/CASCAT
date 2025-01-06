@@ -2,11 +2,10 @@ import torch.nn.functional as F
 import os
 import torch.nn as nn
 import torch.sparse
-from torch_geometric.nn import GCNConv
-import time
-
-from InformationMeasure.MatrixMeasures import *
+import pandas as pd
+import numpy as np
 from models.model_utils import normalize_adj_symm, df2tensor, generate_CMI_from_adj
+from torch_geometric.nn import GCNConv
 
 
 class GraphLearned(torch.nn.Module):
@@ -38,14 +37,10 @@ class GraphLearned(torch.nn.Module):
         if not os.path.exists(path + "CMI.csv"):
             if not os.path.exists(path):
                 os.makedirs(path)
-            print('Generate causal cell graph from adj')
-            time1 = time.time()
             generate_CMI_from_adj(adj_mask=adj, gene_exprs=exprs, save_path=path)
-            print('Time cost: {:.2f}min'.format((time.time() - time1) / 60))
         conditional_mutual_info = pd.read_csv(path + "CMI.csv")
         group_CMI = conditional_mutual_info.groupby(['Cell1', 'Cell2'])['CMI'].mean()
         group_CMI = group_CMI.loc[group_CMI > -np.inf]
-        print('Pruning {}% edges'.format(percent))
         theshold = group_CMI.quantile(percent)
         group_CMI = group_CMI.loc[group_CMI > theshold]
         group_CMI.fillna(np.mean(group_CMI.values), inplace=True)

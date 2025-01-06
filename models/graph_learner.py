@@ -1,7 +1,8 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
 from torch_geometric.nn import GCNConv
-from .model_utils import *
+from .model_utils import normalize_adj_symm
 
 
 class GraphLearner(nn.Module):

@@ -19,7 +19,6 @@ def get_entropy_matrix(nodes, expres):
         exp = get_entropy(valuesX=np.array(expres[node]))
         result.append(exp)
     result = pd.DataFrame(result, index=nodes, columns=['entropy'])
-    print(f'The number of entropy items: {result.shape[0]}')
     return result
 
 
@@ -56,7 +55,7 @@ def get_dual_joint_entropy_matrix(pairs, expres):
     pairs = np.array(pairs, dtype=np.int64)
     dual_entropys = get_fast_dual_entropy(pairs, expres)
     result['entropy'] = dual_entropys
-    print(f'The number of dual entropy pairs: {result.shape[0]}')
+    print(f'Dual Entropy matrix shape: {result.shape}')
     return result
 
 
@@ -81,7 +80,6 @@ def get_fast_dual_entropy(pairs, express):
         probs = (frequencies / sum(frequencies)).astype(np.float64)
         for j in prange(len(probs)):
             dual_entropy[p] += sp.entr(probs[j])
-        dual_entropy[p] /= np.log(2)
     return dual_entropy
 
 
@@ -92,7 +90,7 @@ def get_triple_joint_entropy_matrix(pairs, expres):
     pairs = np.array(pairs, dtype=np.int64)
     triplet_entropys = get_fast_triple_entropy(pairs, expres)
     result['entropy'] = triplet_entropys
-    print(f'The number of triple entropy pairs: {result.shape[0]}')
+    print(f'Triple Entropy matrix shape: {result.shape}')
     return result
 
 
@@ -121,5 +119,4 @@ def get_fast_triple_entropy(pairs, express):
         probs = (frequencies / sum(frequencies)).astype(np.float64)
         for j in prange(len(probs)):
             triplet_entropy[p] += sp.entr(probs[j])
-        triplet_entropy[p] /= np.log(2)
     return triplet_entropy

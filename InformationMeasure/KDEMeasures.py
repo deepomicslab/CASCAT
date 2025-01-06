@@ -18,8 +18,37 @@ def get_kde_conditional_mutual_information(valuesX, valuesY, valuesZ):
     return apply_conditional_mutual_information_formula(entropy_xz, entropy_yz, entropy_xyz, entropy_z)
 
 
+def get_kde_cond_mutual_info(nodes, samples, express):
+    (node_1, node_2, root) = nodes
+    if (node_1, root) not in samples:
+        pdf_values = get_2D_pdf(express[node_1]['express'], express[root]['express'])
+        samples[(node_1, root)] = pdf_values
+    entropy_xz = caculate_entropy(samples[(node_1, root)])
+    if (node_2, root) not in samples:
+        pdf_values = get_2D_pdf(express[node_2]['express'], express[root]['express'])
+        samples[(node_2, root)] = pdf_values
+    entropy_yz = caculate_entropy(samples[(node_2, root)])
+    if (node_1, node_2, root) not in samples:
+        pdf_values = get_3D_pdf(express[node_1]['express'], express[node_2]['express'],
+                                express[root]['express'])
+        samples[(node_1, node_2, root)] = pdf_values
+    entropy_xyz = caculate_entropy(samples[(node_1, node_2, root)])
+    if root not in samples:
+        pdf_values = get_1D_pdf(express[root]['express'])
+        samples[root] = pdf_values
+    entropy_z = caculate_entropy(samples[root])
+    cond_mutual_info = apply_conditional_mutual_information_formula(entropy_xz, entropy_yz, entropy_xyz, entropy_z)
+    return cond_mutual_info, samples
+
+
 def get_kde_conditional_mutual_information2(valuesX, valuesY, valuesZ):
-    # to slow never use this function
+    '''
+    通过express数据计算条件互信息
+    :param valuesX:
+    :param valuesY:
+    :param valuesZ:
+    :return:
+    '''
     entropy_xz = _mutual_information(valuesX, valuesZ)
     entropy_yz = _mutual_information(valuesY, valuesZ)
     entropy_xyz = get_3D_kde_density(valuesX, valuesY, valuesZ)
@@ -27,7 +56,7 @@ def get_kde_conditional_mutual_information2(valuesX, valuesY, valuesZ):
     return apply_conditional_mutual_information_formula(entropy_xz, entropy_yz, entropy_xyz, entropy_z)
 
 
-@jit(nopython=True, cache=True, parallel=True)
+@jit(cache=True, parallel=True, nopython=True)
 def _mutual_information(x1, x2):
     """Calculate the mutual informations."""
     kappa, sigma = 2e-2, 1.0  # under 1000 nodes

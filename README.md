@@ -42,8 +42,9 @@ conda activate cascat
 
 ```bash
 pip install torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 --index-url https://download.pytorch.org/whl/cu118
-pip install torch_geometric pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.1.0+cu118.html
-pip install scanpy matplotlib networkx scikit-misc numpy pydot numba==0.57.1 PyYAML numba-scipy
+pip install torch_geometric==2.6.1 pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.1.0+cu118.html
+pip install scanpy==1.10.1 matplotlib networkx scikit-misc pydot pot numpy==1.26.4 numba==0.57.1 scikit-learn==1.5.2 
+pip install cupy-cuda11x numba==0.60.0 numba-scipy==0.4.0 pandas==2.2.3 scipy==1.11.0
 ```
 
 4. (optinal) Install R to generate simulated data.
