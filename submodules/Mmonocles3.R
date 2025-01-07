@@ -6,6 +6,7 @@ library(dplyr)
 library(igraph)
 library(optparse)
 library(ggplot2)
+use_condaenv("r-reticulate")
 
 run_leiden <- function(cds, n_cluster, reduction_method = "UMAP", k = 10) {
   this_min <- 0
@@ -61,14 +62,14 @@ run_monocle3_func <- function(args)
                                                 milestone_percentages$
                                                 milestone_id$
                                                 values)))
-  counts <- t(as.matrix(adata$X$A))
+  counts <- t(as.matrix(adata$X))
+  # counts <- t(as.matrix(adata$X$A))
   cell_info <- as.matrix(adata$obs$index$values)
   gene_info <- as.matrix(adata$var$index$values)
 
   data <- CreateSeuratObject(
     counts = counts,
-    assay = "RNA"
-  )
+    assay = "RNA")
 
   data.cds <- as.cell_data_set(data)
   data.cds@rowRanges@elementMetadata@listData[["gene_short_name"]] <- gene_info
@@ -86,30 +87,33 @@ run_monocle3_func <- function(args)
   adata$uns$metric_connectivities <- metrics_cluster
   res <- caculate_R_metric(adata)
   IM <- res[1]
-  KT <- res[2]
-  SR <- res[3]
-  formatted_string <- sprintf("monocle3_meanIM%.5f_stdIM%.5f_meanKT%.5f_stdKT%.5f_meanSR%.5f_stdSR%.5f", IM, 0, KT, 0, SR, 0)
+  OT <- res[2]
+  KT <- res[3]
+  SR <- res[4]
+  formatted_string <- sprintf("monocle3_meanIM%.5f_std%.5f_meanOT%.5f_std%.5f_meanKT%.5f_std%.5f_meanSR%.5f_std%.5f", IM, 0, OT, 0, KT, 0, SR, 0)
+  formatted_string <- paste(args$dataname, formatted_string, sep = "_")
   metric_path <- paste(args.out_path, formatted_string, sep = "/", collapse = "")
   print(metric_path)
   writeLines(formatted_string, metric_path)
   plot <- plot_cells(data.cds, color_cells_by = "pseudotime", label_cell_groups = FALSE, graph_label_size = 3, cell_size = 1, label_leaves = FALSE, label_branch_points = FALSE)
-  # png(args$img_path, width = 6, height = 6, units = "in", res = 300)
-  ggsave(filename = "monocle3.png", path = args$img_path, plot, width = 6, height = 6, dpi = 300)
+  # png(args$img_path, width = 6, height = 6, units = "wswin", res = 300)
+  ggsave(filename = paste(args$dataname, "monocle3.png", sep = "_"), path = args$img_path, plot, width = 6, height = 6, dpi = 300)
 }
 
 option_list <- list(
-  make_option(c("-f", "--data_name"), type = "character", default = "binary3"),
-  make_option(c("-k", "--k"), type = "integer", default = 10),
-  make_option(c("-d", "--num_dim"), type = "integer", default = 20)
-);
+  make_option(c("-f", "--dataname"), type = "character", default = "real1"),
+  make_option(c("-k", "--k"), type = "integer", default = 20),
+  make_option(c("-d", "--num_dim"), type = "integer", default = 20));
 
 opt_parser <- OptionParser(option_list = option_list);
 opt <- parse_args(opt_parser);
-opt$data_path <- paste("dataset/scdata/", opt$data_name, "/data.h5ad", sep = "")
-opt$img_path <- paste("img/", opt$data_name, sep = "")
-args.out_path <- paste("result/", opt$data_name, sep = "")
+opt$data_path <- paste("dataset/scdata/", opt$dataname, "/data.h5ad", sep = "")
+opt$img_path <- paste("img/scimg/", "", sep = "")
+args.out_path <- paste("result/", "", sep = "")
 py_anndata <- import("anndata", convert = FALSE)
 np <- import("numpy", convert = FALSE)
 source_python("utils/Metrics.py")
-
+start_time <- Sys.time() # 记录初始时间
 run_monocle3_func(opt)
+end_time <- Sys.time() # 记录结束时间
+print(end_time - start_time) # 打印时间差

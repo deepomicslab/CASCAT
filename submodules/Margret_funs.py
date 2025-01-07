@@ -5,7 +5,8 @@ import os
 import copy
 import time
 from torch.utils.data import DataLoader
-
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import Normalize
 from functools import wraps
 from scipy.sparse.csgraph import dijkstra
 from scipy.sparse import csr_matrix, csc_matrix
@@ -18,7 +19,6 @@ from sklearn.manifold import TSNE
 import umap
 from torch.utils.data import Dataset
 import torch.nn as nn
-
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from matplotlib.text import Annotation
@@ -699,32 +699,22 @@ def train_metric_learner(
         backend=backend,
         cluster_key="metric_clusters",
         nn_kwargs=nn_kwargs,
-        **cluster_kwargs,
-    )
+        **cluster_kwargs)
     clustering_scores.append(score)
-
     # Dataset
-    dataset = MetricDataset(
-        adata, obsm_data_key=obsm_data_key, obsm_cluster_key="metric_clusters"
-    )
+    dataset = MetricDataset(adata, obsm_data_key=obsm_data_key, obsm_cluster_key="metric_clusters")
     cluster_record.append(dataset.num_clusters)
-
     # Train Loss
     train_loss = nn.TripletMarginLoss(**loss_kwargs)
-
     # Model
     infeatures = X.shape[-1]
     model = MetricEncoder(infeatures, code_size=code_size).to(device)
-
     # Trainer
     trainer = MetricTrainer(
-        dataset,
-        model,
-        train_loss,
-        random_state=random_state,
+        dataset, model,
+        train_loss, random_state=random_state,
         backend=device,
-        **trainer_kwargs,
-    )
+        **trainer_kwargs)
     if n_episodes == 0:
         adata.obsm["metric_embedding"] = adata.obsm[obsm_data_key]
 
@@ -754,18 +744,15 @@ def train_metric_learner(
             backend=backend,
             cluster_key="metric_clusters",
             nn_kwargs=nn_kwargs,
-            **cluster_kwargs,
-        )
+            **cluster_kwargs)
         clustering_scores.append(score)
 
         # Update the dataset as the cluster assignments have changed
         dataset = MetricDataset(
-            adata, obsm_data_key=obsm_data_key, obsm_cluster_key="metric_clusters"
-        )
+            adata, obsm_data_key=obsm_data_key, obsm_cluster_key="metric_clusters")
         cluster_record.append(dataset.num_clusters)
         trainer.update_dataset(dataset)
         print(f"Time Elapsed for epoch: {time.time() - epoch_start_time}s")
-
     # Add the modularity score estimates to the adata
     adata.uns["metric_clustering_scores"] = clustering_scores
     adata.uns["metric_n_cluster_records"] = cluster_record
@@ -773,8 +760,7 @@ def train_metric_learner(
 
 @compute_runtime
 def compute_undirected_cluster_connectivity(
-        communities, adj, z_threshold=1.0, conn_threshold=None
-):
+        communities, adj, z_threshold=1.0, conn_threshold=None):
     N = communities.shape[0]
     n_communities = np.unique(communities).shape[0]
 
@@ -932,6 +918,7 @@ def plot_embeddings(
 def plot_connectivity_graph(
         embeddings,
         communities,
+        pseudotime,
         cluster_connectivities,
         start_cell_ids=None,
         mode="undirected",
@@ -946,12 +933,15 @@ def plot_connectivity_graph(
         offset=0,
         **kwargs,
 ):
-    g, node_positions = compute_connectivity_graph(
-        embeddings, communities, cluster_connectivities, mode=mode
-    )
-
+    g, node_positions = compute_connectivity_graph(embeddings, communities, cluster_connectivities, mode=mode)
+    cluster_ids = np.unique(communities)
+    node_time = {i: pseudotime[communities == i].mean() for i in cluster_ids}
     start_cluster_ids = list(set([communities[id] for id in start_cell_ids]))
-    colors = np.unique(communities)
+    # colors = np.unique(communities)
+    data_min, data_max = min(pseudotime), max(pseudotime)
+    norm = Normalize(vmin=data_min, vmax=data_max)
+    sm = ScalarMappable(cmap=plt.get_cmap('plasma'), norm=norm)
+    colors = [sm.to_rgba(node_time[i]) for i in np.unique(communities)]
     if node_color is not None:
         colors = []
         for c_id in np.unique(communities):
@@ -959,7 +949,6 @@ def plot_connectivity_graph(
                 colors.append(start_node_color)
             else:
                 colors.append(node_color)
-    # Draw the graph
     fig, ax = plt.subplots(figsize=figsize)
     if title is not None:
         plt.title(title)
@@ -1081,7 +1070,7 @@ def plot_pseudotime(
         cmap=cmap,
         ax=ax,
         figsize=figsize,
-        show_colorbar=True,
+        # show_colorbar=True,
         cb_axes_pos=cb_axes_pos,
         save_path=save_path,
         save_kwargs=save_kwargs,

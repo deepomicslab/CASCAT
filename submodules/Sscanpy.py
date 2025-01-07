@@ -2,10 +2,7 @@ import argparse
 import os
 import sys
 
-# sys.path.append(r'C:\Users\yingyinyu3\PycharmProjects\STCMI')
-# sys.path.append('/mnt/c/Users/yingyinyu3/PycharmProjects/STCMI')
-sys.path.append('/home/a/yingyingyu/STCMI')
-
+sys.path.append('/home/a/yingyingyu/CASCAT')
 from utils.data_loader import *
 from utils.Metrics import ClusteringMetrics
 from utils.Utils import run_leiden
@@ -22,6 +19,7 @@ class Experiment:
         sc.pp.pca(adata, n_comps=20, random_state=self.args.seed)
         sc.pp.neighbors(adata, n_neighbors=args.k, n_pcs=20, random_state=self.args.seed)
         self.adata = adata
+        return adata
 
     def get_CMI_connectivities(self, dir, percent=0.2):
         adj = self.adata.obsp["connectivities"]
@@ -63,14 +61,14 @@ class Experiment:
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataname', type=str, default="Zhuang-ABCA-2.005")
+    parser.add_argument('--dataname', type=str, default="BZ5")
     parser.add_argument('--k', type=int, default=10)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--hvg', type=bool, default=False)
     parser.add_argument('--norm_target', type=float, default=None)
     parser.add_argument('--adata_file', type=str, default='../dataset/stdata/')
     parser.add_argument('--CMI_dir', type=str, default='../cmi_result/')
-    parser.add_argument('--analysis_dir', type=str, default='../analysis/ablation/p_analysis/')
+    parser.add_argument('--analysis_dir', type=str, default='../analysis/p_analysis/')
     parser.add_argument('--output_dir', type=str, default='../result/')
     parser.add_argument('--img_dir', type=str, default='../img/')
     args = parser.parse_args()
@@ -83,8 +81,7 @@ def parse_arguments():
     return args
 
 
-if __name__ == '__main__':
-    args = parse_arguments()
+def run_p_analysis():
     result_df = []
     for p in np.arange(0.01, 0.305, 0.01):
         ari_ls, ami_ls = [], []
@@ -96,13 +93,28 @@ if __name__ == '__main__':
             _, adata = run_leiden(adata, len(set(adata.obs['cluster'])), cluster_key='leiden', random_state=args.seed)
             cm_all = ClusteringMetrics(adata.obs['cluster'].astype('category').values, adata.obs['leiden'])
             ari, ami = cm_all.evaluationClusterModelFromLabel()
-            ari_ls.append(ari)
-            ami_ls.append(ami)
+        ari_ls.append(ari)
+        ami_ls.append(ami)
+        print('ARI: {:.5f}, AMI: {:.5f}'.format(np.mean(ari_ls), np.mean(ami_ls)))
         print('Percent:{:.2f} Mean ARI: {:.5f}, Mean AMI: {:.5f}'.format(p, np.mean(ari_ls), np.mean(ami_ls)))
-        result_df.append([p, np.mean(ari_ls), np.mean(ami_ls)])
+    result_df.append([p, np.mean(ari_ls), np.mean(ami_ls)])
     result_df = pd.DataFrame(result_df, columns=['Percent', 'ARI', 'AMI'])
     result_df.to_csv(args.analysis_dir + 'result.csv', index=False)
-    # metric_path = os.path.join(args.out_path,
-    #                            'scanpy_meanARI{:.5f}_stdARI{:.5f}_meanAMI{:.5f}_stdAMI{:.5f}'.format(
-    #                                np.mean(ari_ls), np.std(ari_ls), np.mean(ami_ls), np.std(ami_ls)))
-    # open(metric_path, 'a').close()
+    metric_path = os.path.join(args.out_path,
+                               'scanpy_meanARI{:.5f}_stdARI{:.5f}_meanAMI{:.5f}_stdAMI{:.5f}'.format(
+                                   np.mean(ari_ls), np.std(ari_ls), np.mean(ami_ls), np.std(ami_ls)))
+    open(metric_path, 'a').close()
+
+
+if __name__ == '__main__':
+    from time import time
+
+    start = time()
+    args = parse_arguments()
+    args.seed = 0
+    exp = Experiment(args)
+    adata = exp.load_data()
+    _, adata = run_leiden(adata, len(set(adata.obs['cluster'])), cluster_key='leiden', random_state=args.seed)
+    cm_all = ClusteringMetrics(adata.obs['cluster'].astype('category').values, adata.obs['leiden'])
+    ari, ami = cm_all.evaluationClusterModelFromLabel()
+    print('Total time{}'.format(time() - start))

@@ -1,13 +1,9 @@
 import random
-
 import argparse
 import matplotlib.pyplot as plt
 import os
 import sys
-
-# sys.path.append(r'C:\Users\yingyinyu3\PycharmProjects\STCMI')
-sys.path.append('/mnt/c/Users/yingyinyu3/PycharmProjects/STCMI')
-# sys.path.append('/home/a/yingyingyu/STCMI')
+sys.path.append('/home/a/yingyingyu/CASCAT')
 
 from utils.Utils import *
 from utils.Metrics import caculate_metric, ClusteringMetrics
@@ -108,62 +104,68 @@ class Experiment:
         ari, ami = cm_all.evaluationClusterModelFromLabel()
         if 'start_id' in self.adata.uns:
             self.adata.uns['iroot'] = np.where(self.adata.obs_names == self.adata.uns['start_id'])[0][0]
-            sc.tl.dpt(self.adata)
+        sc.tl.dpt(self.adata)
         print(f'ARI: {ari}, AMI: {ami}')
+        sc.tl.paga(self.adata, groups=self.predict_key)
 
     def plot_paga(self):
-        fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
         sc.tl.draw_graph(self.adata, random_state=self.args.seed)
         clustermap = self.cluster_analysis()
         self.adata.obs[self.predict_key + '_map'] = self.adata.obs[self.predict_key].map(clustermap)
         sc.pl.draw_graph(self.adata, color=self.pesudotime_key, show=False, ax=ax, colorbar_loc=None, title=None,
-                         cmap='cool')
+                         cmap='plasma')
         centriods = self.caculate_centriods(self.adata.obsm['X_draw_graph_fr'])
         sc.tl.paga(self.adata, groups=self.predict_key + '_map')
         sc.pl.paga(self.adata, color=self.pesudotime_key, pos=centriods, node_size_scale=0.5, edge_width_scale=1,
-                   ax=ax, show=False, arrowsize=10, colorbar=False, fontsize=16, cmap='coolwarm',
+                   ax=ax, show=False, arrowsize=10, colorbar=False, fontsize=22, cmap='plasma',
                    random_state=self.args.seed)
+        # cbar = plt.colorbar(ax.collections[0], ax=ax, fraction=0.03, pad=0.01)
         ax.set_title('', fontsize=16)
         ax.axis('off')
-        plt.savefig(self.args.img_path + '/paga.png')
-        plt.show()
+        plt.savefig(os.path.join(self.args.img_path, '{}_paga.png').format(self.args.dataname))
+        # plt.show()
 
     def caculate_metrics(self):
-        IM, KT, SR = caculate_metric(self.adata, psedo_key='dpt_pseudotime', adj_key='paga')
-        print(f'IM: {IM}, KT: {KT}, SR: {SR}')
-        return IM, KT, SR
+        IM, OT, KT, SR = caculate_metric(self.adata, psedo_key='dpt_pseudotime', adj_key='paga')
+        print(f'IM: {IM}, OT:{OT},KT: {KT}, SR: {SR}')
+        return IM, OT, KT, SR
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataname', type=str, default="linear2")
-    parser.add_argument('--adata_file', type=str, default='./dataset/scdata/')
-    parser.add_argument('--img_path', type=str, default='./img/')
-    parser.add_argument('--out_path', type=str, default='./result/')
+    parser.add_argument('--dataname', type=str, default="real1")
+    parser.add_argument('--adata_file', type=str, default='../dataset/scdata/')
+    parser.add_argument('--img_path', type=str, default='../img/scimg/')
+    parser.add_argument('--out_path', type=str, default='../result/')
     parser.add_argument('--predict_key', type=str, default='louvain')
     parser.add_argument('--seed', type=int, default=1)
-    parser.add_argument('--n_neighbors', type=int, default=10)
+    parser.add_argument('--n_neighbors', type=int, default=30)
     return parser.parse_args()
 
 
 if __name__ == '__main__':
+    from time import time
+
+    start = time()
     args = parse_arguments()
     args.adata_file = args.adata_file + args.dataname + '/data.h5ad'
-    args.img_path = args.img_path + args.dataname
-    args.out_path = args.out_path + args.dataname
-    IM_ls, KT_ls, SR_ls = [], [], []
-    for seed in range(1):
+    args.img_path = args.img_path
+    IM_ls, OT_ls, KT_ls, SR_ls = [], [], [], []
+    for seed in range(5):
         args.seed = seed
         exp = Experiment(args)
         exp.run_paga()
         exp.plot_paga()
-        IM, KT, SR = exp.caculate_metrics()
+        print(f'Paga time: {time() - start}')
+        IM, OT, KT, SR = exp.caculate_metrics()
         IM_ls.append(IM)
+        OT_ls.append(OT)
         KT_ls.append(KT)
         SR_ls.append(SR)
-    print(f'IM: {np.mean(IM_ls)}, KT: {np.mean(KT_ls)}, SR: {np.mean(SR_ls)}')
-    # metric_path = os.path.join(args.out_path,
-    #                            'paga_meanIM{:.5f}_stdIM{:.5f}_meanKT{:.5f}_stdKT{:.5f}_meanSR{:.5f}_stdSR{:.5f}'.format(
-    #                                np.mean(IM_ls), np.std(IM_ls), np.mean(KT_ls), np.std(KT_ls), np.mean(SR_ls),
-    #                                np.std(SR_ls)))
-    # open(metric_path, 'a').close()
+    print(f'IM: {np.mean(IM_ls)},OT:{np.mean(OT_ls)}, KT: {np.mean(KT_ls)}, SR: {np.mean(SR_ls)}')
+    metric_path = os.path.join(args.out_path,
+                               '{}_paga_IM{:.5f}_std{:.5f}_meanOT{:.5f}_std{:.5f}_meanKT{:.5f}_std{:.5f}_meanSR{:.5f}_std{:.5f}'.format(
+                                   args.dataname, np.mean(IM_ls), np.std(IM_ls), np.mean(OT_ls), np.std(OT_ls),
+                                   np.mean(KT_ls), np.std(KT_ls), np.mean(SR_ls), np.std(SR_ls)))
+    open(metric_path, 'a').close()

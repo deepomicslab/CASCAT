@@ -1,20 +1,19 @@
 import stlearn as st
 import argparse
-import os
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 import matplotlib
-
+import numpy as np
+import pandas as pd
 import sys
-
-sys.path.append('/mnt/c/Users/yingyinyu3/PycharmProjects/STCMI')
-
+import scanpy as sc
+sys.path.append('/mnt/c/Users/yingyinyu3/PycharmProjects/CASCAT')
 from utils.Metrics import ClusteringMetrics
-from utils.Utils import *
-
+from utils.Utils import run_louvain
+from utils.Plot import plot_st_embedding
+from models.model_utils import get_CMI_connectivities
 rcParams['font.family'] = 'Times New Roman'
 st.settings.set_figure_params(dpi=300)
-from models.model_utils import get_CMI_connectivities
 
 
 class Experiment:
@@ -25,7 +24,6 @@ class Experiment:
 
     def load_data(self, path):
         adata = sc.read_h5ad(path)
-        # spatial_matrix = pd.DataFrame(adata.obsm['spatial'][:, [1, 0]], columns=["imagecol", "imagerow"])
         spatial_matrix = pd.DataFrame(adata.obsm['spatial'], columns=["imagecol", "imagerow"])
         max_coor = np.max(adata.obsm["spatial"])
         scale = 2000 / max_coor
@@ -39,10 +37,10 @@ class Experiment:
         if 'highly_variable' in adata.var.keys():
             adata = adata[:, adata.var['highly_variable']].copy()
         print('Processed adata:', adata, sep='\n')
-        sc.tl.pca(adata, random_state=self.args.seed)
+        st.em.run_pca(adata, random_state=self.args.seed)
         st.pp.neighbors(adata, n_neighbors=self.args.n_neighbors, use_rep='X_pca', random_state=self.args.seed,
                         n_pcs=20)
-        adata.obsp['connectivities'] = get_CMI_connectivities(adata, args.CMI_dir, percent=args.p)
+        # adata.obsp['connectivities'] = get_CMI_connectivities(adata, args.CMI_dir, percent=args.p)
         return adata
 
     def run_group_frac(self):
@@ -60,36 +58,6 @@ class Experiment:
                 group_frac[ii][group_i] = true_label_in_group_i.count(ii)
         print(group_frac)
         return group_frac
-
-    def plot_pesudotime(self, adata, cell_alpha=0.7, spot_size=15,
-                        pseudotime_key="dpt_pseudotime", ax=None, margin=0, show_plot=True, dpi=300, fname=None):
-        imagecol = adata.obs["imagecol"]
-        imagerow = adata.obs["imagerow"]
-        tmp = adata.obs
-        fig, a = plt.subplots()
-        if ax != None:
-            a = ax
-        dpt = adata.obs[pseudotime_key]
-        vmin, vmax = min(dpt), max(dpt)
-        from sklearn.preprocessing import MinMaxScaler
-        scaler = MinMaxScaler()
-        scale = scaler.fit_transform(tmp[pseudotime_key].values.reshape(-1, 1)).reshape(-1, 1)
-        a.scatter(tmp["imagecol"], tmp["imagerow"], edgecolor="none", alpha=cell_alpha, s=spot_size,
-                  marker="o", vmin=vmin, vmax=vmax, cmap=plt.get_cmap("viridis"), c=scale.reshape(1, -1)[0])
-        a.axis("off")
-        a.set_xlim(imagecol.min() - margin, imagecol.max() + margin)
-        a.set_ylim(imagerow.min() - margin, imagerow.max() + margin)
-
-        a.set_ylim(a.get_ylim()[::-1])
-        cax = fig.add_axes([0.3, 0.1, 0.3, 0.02])
-        norm = plt.Normalize(vmin=vmin, vmax=vmax)
-        sm = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"), norm=norm)
-        sm.set_array([])
-        fig.colorbar(sm, cax=cax, orientation="horizontal")
-        if fname is not None:
-            fig.savefig(fname, dpi=dpi, bbox_inches="tight", pad_inches=0)
-        if show_plot == True:
-            plt.show()
 
     def assign_color_labels(self, node_list):
         mean_dpt = []
@@ -109,19 +77,36 @@ class Experiment:
             node in node_list]
 
     def plot_cluster(self):
-        st.pl.cluster_plot(self.data, use_label='louvain', show_trajectories=True,
-                           list_clusters=list(self.data.obs['louvain'].unique()),
-                           show_subcluster=True, dpi=300, fname=self.args.img_path + "stlearn.png",
-                           trajectory_edge_color="black", margin=1, size=self.args.node_size,
-                           trajectory_arrowsize=self.args.trajectory_arrowsize,
-                           trajectory_width=self.args.trajectory_width, cmap="Paired")
+        # st.pl.cluster_plot(self.data, use_label='louvain', show_trajectories=True,
+        #                    list_clusters=list(self.data.obs['louvain'].unique()), show_image=False,
+        #                    show_subcluster=True, dpi=300, fname=self.args.img_path + "stlearn.png",
+        #                    trajectory_edge_color="black", margin=True, size=self.args.node_size,
+        #                    trajectory_arrowsize=self.args.trajectory_arrowsize,
+        #                    trajectory_width=self.args.trajectory_width, cmap="Paired")
+        labels = self.data.obs['louvain'].astype(str)
+        colors = self.data.uns['louvain_colors']
+        group_frac = self.run_group_frac()
+        group_frac.columns = group_frac.columns.astype(str)
+        group_frac.index = group_frac.index.astype(str)
+        group_frac = group_frac.T
+        connect = self.data.uns["global_graph"]["graph"].toarray()
+        order_label = sorted(labels.unique())
+        connect = pd.DataFrame(connect, index=order_label, columns=order_label)
+        # # set col '4' and inde '4' all 0
+        # connect.loc['4', :] = 0
+        # connect.loc[:, '4'] = 0
+        # connect = (connect > 0.1).astype(int)
+        # connect = np.tril(connect)
+        connect = np.triu(connect)
+        connect = pd.DataFrame(connect, index=order_label, columns=order_label)
+        plot_st_embedding(self.data, labels, colors=colors, show_trajectory=True, group_frac=group_frac,
+                          connectivities=connect, save_path=self.args.img_path + "stlearn.png")
 
     def run_pseudotime(self):
         group_frac = self.run_group_frac()
         if type(group_frac.columns[0]) == np.int64:
             self.args.root = int(self.args.root)
         root = group_frac[group_frac[self.args.root] == group_frac[self.args.root].max()].index[0]
-
         self.data.uns["iroot"] = st.spatial.trajectory.set_root(self.data, use_label='louvain',
                                                                 cluster=root)
         # The maximum distance between two samples for one to be considered as in the neighborhood
@@ -130,7 +115,7 @@ class Experiment:
         st.spatial.trajectory.pseudotimespace_global(self.data, use_label='louvain',
                                                      list_clusters=self.data.obs['louvain'].unique())
         self.assign_color_labels(list(self.data.obs['louvain'].unique()))
-        # self.plot_cluster()
+        self.plot_cluster()
 
     def run_stlearn(self):
         resolution, _ = run_louvain(self.data, self.nclasses, cluster_key='louvain',
@@ -144,19 +129,19 @@ class Experiment:
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataname', type=str, default="OSCC8")
+    parser.add_argument('--dataname', type=str, default="OSCC7")
     parser.add_argument('--data_dir', type=str, default='../dataset/stdata/')
     parser.add_argument('--img_dir', type=str, default='../img/')
     parser.add_argument('--out_dir', type=str, default='../result/')
-    parser.add_argument('--seed', type=int, default=1)
-    parser.add_argument('--root', type=str, default='L1')
-    parser.add_argument('--node_size', type=int, default=10)
+    parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--root', type=str, default='NA')
+    parser.add_argument('--node_size', type=int, default=40)
     parser.add_argument('--trajectory_arrowsize', type=int, default=1)
     parser.add_argument('--trajectory_width', type=int, default=2)
     parser.add_argument('--n_neighbors', type=int, default=10)
     parser.add_argument('--p', type=float, default=0.05)
     parser.add_argument('--CMI_dir', type=str, default='../cmi_result/')
-    parser.add_argument('--analysis_dir', type=str, default='../analysis/ablation/p_analysis/')
+    parser.add_argument('--analysis_dir', type=str, default='../analysis/p_analysis/')
     parser.add_argument('--hvg', type=bool, default=True)
     args = parser.parse_args()
     args.data_path = args.data_dir + args.dataname + '/data.h5ad'
@@ -169,21 +154,25 @@ def parse_arguments():
 
 if __name__ == '__main__':
     args = parse_arguments()
-    result_df = []
-    for p in np.arange(0.01, 0.305, 0.01):
-        ari_ls, ami_ls = [], []
-        for seed in range(5):
-            args.seed = seed
-            args.p = p
-            exp = Experiment(args)
-            ari, ami = exp.run_stlearn()
-            # exp.run_pseudotime()
-            ari_ls.append(ari)
-            ami_ls.append(ami)
-        print('Percent:{:.2f} Mean ARI: {:.5f}, Mean AMI: {:.5f}'.format(p, np.mean(ari_ls), np.mean(ami_ls)))
-        result_df.append([p, np.mean(ari_ls), np.mean(ami_ls)])
-    result_df = pd.DataFrame(result_df, columns=['Percent', 'ARI', 'AMI'])
-    result_df.to_csv(args.analysis_dir + 'result.csv', index=False)
+    exp = Experiment(args)
+    ari, ami = exp.run_stlearn()
+    exp.run_pseudotime()
+
+    # result_df = []
+    # for p in np.arange(0.01, 0.305, 0.01):
+    #     ari_ls, ami_ls = [], []
+    #     for seed in range(5):
+    #         args.seed = seed
+    #         args.p = p
+    #         exp = Experiment(args)
+    #         ari, ami = exp.run_stlearn()
+    #         exp.run_pseudotime()
+    #         ari_ls.append(ari)
+    #         ami_ls.append(ami)
+    #     print('Percent:{:.2f} Mean ARI: {:.5f}, Mean AMI: {:.5f}'.format(p, np.mean(ari_ls), np.mean(ami_ls)))
+    #     result_df.append([p, np.mean(ari_ls), np.mean(ami_ls)])
+    # result_df = pd.DataFrame(result_df, columns=['Percent', 'ARI', 'AMI'])
+    # result_df.to_csv(args.analysis_dir + 'result.csv', index=False)
     # metric_path = os.path.join(args.out_path,
     #                            'stlearn_meanARI{:.5f}_stdARI{:.5f}_meanAMI{:.5f}_stdAMI{:.5f}'.format(
     #                                np.mean(ari_ls), np.std(ari_ls), np.mean(ami_ls), np.std(ami_ls)))

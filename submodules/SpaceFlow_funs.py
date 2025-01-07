@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 import math
 import os
-import torch
 import random
 import gudhi
 import anndata
-import cmcrameri
 import numpy as np
 import scanpy as sc
 import networkx as nx
+import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 from scipy.spatial import distance_matrix
@@ -17,10 +16,10 @@ from sklearn.neighbors import kneighbors_graph
 from sklearn import metrics
 import seaborn as sns
 import pandas as pd
-# -*- coding: utf-8 -*-
-import torch
-
 from sklearn.cluster import KMeans
+
+
+# -*- coding: utf-8 -*-
 
 
 def sparse_mx_to_torch_edge_list(sparse_mx):
@@ -296,15 +295,15 @@ class SpaceFlow(object):
                 min_loss = train_loss
             ari, ami, predict_labels = self.evaluation(z.to('cpu').detach().numpy(), self.adata.obs["cluster"].values)
             if ari > best_ari:
-                best_embedding = z.to('cpu').detach().numpy()
                 best_ari = ari
+                best_embedding = z.to('cpu').detach().numpy()
                 best_labels = predict_labels
-            print(f"Epoch {epoch + 1}/{epochs}, Loss: {str(train_loss)}, ARI: {str(ari)}, AMI: {str(ami)}")
+            print(f"Epoch {epoch + 1}/{epochs}, Loss: {str(train_loss)}, ARI: {str(ari)}, AMI: {str(ami)} in Kmeans")
             ari_records.append(ari)
             ami_records.append(ami)
             if patience > max_patience and epoch > min_stop:
                 break
-        # emb_path = os.path.join(embedding_save_filepath, 'trial{}_ARI{:.5f}.npy'.format(trial, best_ari))
+        # emb_path = os.path.join(embedding_save_filepath, 'trial{}_ARI{:.5f}.npy'.format(trial, ari))
         # np.save(emb_path, best_embedding)
         # label_path = os.path.join(embedding_save_filepath, 'trial{}_labels.npy'.format(trial))
         # np.save(label_path, best_labels)
@@ -349,6 +348,7 @@ class SpaceFlow(object):
         for clu_trial in range(5):
             kmeans = KMeans(n_clusters=n_cluster, random_state=clu_trial, n_init="auto").fit(embedding)
             predict_labels = kmeans.predict(embedding)
+
             cm_all = ClusteringMetrics(labels, predict_labels)
             ari, ami = cm_all.evaluationClusterModelFromLabel()
             ari_ls.append(ari)
@@ -492,17 +492,36 @@ class SpaceFlow(object):
         error_message = "No pseudo Spatiotemporal Map data found, please ensure you have run the pseudo_Spatiotemporal_Map() method."
         try:
             fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['left'].set_visible(False)
+            ax.spines['bottom'].set_visible(False)
             x, y = self.adata_preprocessed.obsm["spatial"][:, 0], self.adata_preprocessed.obsm["spatial"][:, 1]
             st = sns.scatterplot(x=x, y=y, s=scatter_sz, hue=self.adata_preprocessed.obs['celltype_mapped_refined'],
                                  palette=colormap, legend=True, ax=ax)
             ax.invert_yaxis()
             # legend
-            plt.legend(title="", loc="center left", bbox_to_anchor=(1, 0.5), ncol=1)
+            plt.legend(title="", loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, frameon=False)
+
             # clb = fig.colorbar(st)
             # clb.ax.set_ylabel("pseudotime", labelpad=10, rotation=270, fontsize=10, weight='bold')
             # ax.set_title("pseudo-Spatiotemporal Map", fontsize=14)
-            ax.set_facecolor("none")
 
+            def get_centriod(x, y, label):
+                centriods = {}
+                df = pd.DataFrame({'x': x, 'y': y, 'label': label})
+                df = df.groupby('label').mean().reset_index()
+                for i in range(len(df)):
+                    centriods[df['label'][i]] = (df['x'][i], df['y'][i])
+                return centriods
+
+            centers = get_centriod(x, y, self.adata_preprocessed.obs['celltype_mapped_refined'])
+            connectivities = self.adata_preprocessed.uns['paga']['connectivities']
+            connectivities = pd.DataFrame(np.tril(connectivities.toarray(), k=-1))
+            graph = nx.from_pandas_adjacency(connectivities, create_using=nx.Graph)
+            nx.draw_networkx_edges(graph, pos=centers, arrows=True,
+                                   ax=ax, arrowstyle="-", connectionstyle="arc3,rad=0.2", width=2)
+            ax.set_facecolor("none")
             save_dir = os.path.dirname(pSM_figure_save_filepath)
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)

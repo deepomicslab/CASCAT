@@ -39,14 +39,20 @@ load_data <- function(args)
     x_coord = xy_coord[, 2],
     y_coord = -1 * xy_coord[, 1])
   # check the datatype
-  if (typeof(adata$X) == "environment")
-  {
-    # counts_ <- t(as.matrix(adata$X$toarray()))
-    counts_ <- t(as.matrix(adata$X))
-  } else
-  {
-    counts_ <- t(as.matrix(adata$X))
-  }
+  # if (typeof(adata$X) == "environment")
+  # {
+  #   # counts_ <- t(as.matrix(adata$X$toarray()))
+  #   counts_ <- t(as.matrix(adata$X))
+  # } else
+  # {
+  #   counts_ <- t(as.matrix(adata$X))
+  # }
+  counts_ <- tryCatch({
+    t(as.matrix(adata$X$A))
+  }, error = function(e) {
+    t(as.matrix(adata$X))
+  })
+
   counts_ <- as(as.matrix(counts_), "dgCMatrix")
   print(dim(counts_)) # The count matrix
   print(dim(xy_coord)) # The x and y coordinates. We flipped the y axis for visualization.
@@ -93,25 +99,35 @@ gene_order <- function(res, pca_res)
   plot_gene_expression_trajectory(expr)
 }
 
+use_python("C:/Users/yingyinyu3/AppData/Local/anaconda3/")
 py_anndata <- import("anndata", convert = FALSE)
+source_python("utils/Metrics.py")
 np <- import("numpy", convert = FALSE)
 pd <- import("pandas", convert = FALSE)
-# args <- list(data_path = 'dataset/stdata/BZ5/data.h5ad', img_path = "img/BZ5/spatialpca.png", num_dim = 30, k = 30)
-# args <- list(data_path = 'dataset/stdata/BZ9/data.h5ad', img_path = "img/BZ9/spatialpca.png", num_dim = 30, k = 30)
-# args <- list(data_path = 'dataset/stdata/BZ14/data.h5ad', img_path = "img/BZ14/spatialpca.png", num_dim = 30, k = 30)
-# args <- list(data_path = 'dataset/stdata/starmap/data.h5ad', img_path = "img/starmap/spatialpca.png", num_dim = 30, k = 30)
-# args <- list(data_path = 'dataset/stdata/HER2ST/data.h5ad', img_path = "img/HER2ST/spatialpca.png", num_dim = 30, k = 30)
-# args <- list(data_path = 'dataset/stdata/Zhuang-ABCA-2.005/data.h5ad', img_path = "img/Zhuang-ABCA-2.005/spatialpca.png", num_dim = 30, k = 30)
-args <- list(data_path = 'dataset/stdata/Zhuang-ABCA-2.053/data.h5ad', img_path = "img/Zhuang-ABCA-2.053/spatialpca.png", num_dim = 30, k = 30)
-# args <- list(data_path = 'dataset/stdata/OSCC1/data.h5ad', img_path = "img/OSCC1/spatialpca.png", num_dim = 30, k = 30)
-# args <- list(data_path = 'dataset/stdata/OSCC2/data.h5ad', img_path = "img/OSCC2/spatialpca.png", num_dim = 30, k = 30)
-# args <- list(data_path = 'dataset/stdata/OSCC3/data.h5ad', img_path = "img/OSCC3/spatialpca.png", num_dim = 30, k = 30)
-# args <- list(data_path = 'dataset/stdata/OSCC5/data.h5ad', img_path = "img/OSCC5/spatialpca.png", num_dim = 30, k = 30)
-# args <- list(data_path = 'dataset/stdata/OSCC7/data.h5ad', img_path = "img/OSCC7/spatialpca.png", num_dim = 30, k = 30)
-# args <- list(data_path = 'dataset/stdata/OSCC8/data.h5ad', img_path = "img/OSCC8/spatialpca.png", num_dim = 30, k = 30)
+# args <- list(data_path = 'dataset/stdata/BZ5/data.h5ad', img_path = "img/BZ5/spatialpca.png", out_path = "result/BZ5", num_dim = 30, k = 10)
+# args <- list(data_path = 'dataset/stdata/BZ9/data.h5ad', img_path = "img/BZ9/spatialpca.png", out_path = "result/BZ9",num_dim = 30, k = 10)
+# args <- list(data_path = 'dataset/stdata/BZ14/data.h5ad', img_path = "img/BZ14/spatialpca.png", out_path = "result/BZ14", num_dim = 30, k = 10)
+# args <- list(data_path = 'dataset/stdata/starmap/data.h5ad', img_path = "img/starmap/spatialpca.png", out_path = "result/starmap", num_dim = 30, k = 10)
+# args <- list(data_path = 'dataset/stdata/HER2ST/data.h5ad', img_path = "img/HER2ST/spatialpca.png", out_path = "result/HER2ST", num_dim = 30, k = 10)
+# args <- list(data_path = 'dataset/stdata/Zhuang-ABCA-2.005/data.h5ad', img_path = "img/Zhuang-ABCA-2.005/spatialpca.png", out_path = "result/Zhuang-ABCA-2.005",num_dim = 30, k = 10)
+# args <- list(data_path = 'dataset/stdata/Zhuang-ABCA-2.053/data.h5ad', img_path = "img/Zhuang-ABCA-2.053/spatialpca.png", out_path = "result/Zhuang-ABCA-2.053", num_dim = 30, k = 30)
+# args <- list(data_path = 'dataset/stdata/OSCC1/data.h5ad', img_path = "img/OSCC1/spatialpca.png", out_path = "result/OSCC1", num_dim = 30, k = 10)
+# args <- list(data_path = 'dataset/stdata/OSCC2/data.h5ad', img_path = "img/OSCC2/spatialpca.png", out_path = "result/OSCC2",num_dim = 30, k = 10)
+# args <- list(data_path = 'dataset/stdata/OSCC3/data.h5ad', img_path = "img/OSCC3/spatialpca.png", out_path = "result/OSCC3",num_dim = 30, k = 10)
+# args <- list(data_path = 'dataset/stdata/OSCC5/data.h5ad', img_path = "img/OSCC5/spatialpca.png", out_path = "result/OSCC5",num_dim = 30, k = 10)
+# args <- list(data_path = 'dataset/stdata/OSCC7/data.h5ad', img_path = "img/OSCC7/spatialpca.png", out_path = "result/OSCC7",num_dim = 30, k = 10)
+args <- list(data_path = 'dataset/stdata/OSCC8/data.h5ad', img_path = "img/OSCC8/spatialpca.png", out_path = "result/OSCC8", num_dim = 30, k = 10)
 res <- load_data(args)
 pca_res <- run_spatialPCA(res$counts_, res$xy_coord, res$n_class)
-plot_result(pca_res$pseudotime_traj1, args, assign_colors(), pca_res$clusterlabel_refine, res)
+adata <- py_anndata$read_h5ad(args$data_path)
+res <- caculate_R_cluster_metric(as.vector(pca_res$clusterlabel_refine), adata)
+ARI <- res[1]
+AMI <- res[2]
+formatted_string <- sprintf("spatialPCA_meanARI%.5f_stdARI%.5f_meanAMI%.5f_stdAMI%.5f", ARI, 0, AMI, 0)
+metric_path <- paste(args$out_path, formatted_string, sep = "/", collapse = "")
+print(metric_path)
+writeLines(formatted_string, metric_path)
+# plot_result(pca_res$pseudotime_traj1, args, assign_colors(), pca_res$clusterlabel_refine, res)
 
 
 
