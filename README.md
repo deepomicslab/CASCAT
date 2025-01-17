@@ -121,11 +121,15 @@ the relative path to the data.
     - **Note:** To access the TI metrics, store the true pseudo-time labels in `adata.uns['timecourse']` and the trajectory
       topology in `adata.uns['milestone_network']`.
 ### Step4: Visualization
-To visualize the results, refer to the [Visualization.ipynb](Visualization.ipynb) notebook
+To visualize the results, refer to the [Visualization.ipynb](reproduce.ipynb) notebook
 
 
 ## 🎉 InformationMeasures
 
 We've implemented the Python version of [InformationMeasures.jl](https://github.com/Tchanders/InformationMeasures.jl),
-enhanced with a kernel function accelerated by numba.
+enhanced with a kernel function.
+
 Consult the [InfoMeasure.ipynb](InfoMeasure.ipynb) for usage details.
+
+In addition, we also provide a GPU version implemented with [CuPy](https://cupy.dev/), as well as a parallel version implemented with Numba to accelerate the computation of conditional mutual information.
+
