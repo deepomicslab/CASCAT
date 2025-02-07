@@ -61,8 +61,8 @@ export rScript = '/home/yourname/miniconda3/envs/r_env/bin/Rscript'
 
 We provide example dataset **tree1** in the ./data/tree1/. Other simulation data is temporarily hosted
 on [Google drive](https://drive.google.com/drive/folders/1Ycm_e7EtX07cjuw0a5vbCs_dIswT-n7n?usp=sharing).
-Once the manuscript status is updated, it will be uploaded to Zenodo.
 
+**The code and data have also been permanently archived on [Figshare](https://figshare.com/projects/CASCAT/236465)**
 ## 📚 Quick Start
 
 `python main.py --YAML ./config/tree1.yml --mode train --verbose True`
